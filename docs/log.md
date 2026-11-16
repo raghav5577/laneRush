@@ -158,10 +158,27 @@ laneRush/
 ### Phase 8 & 9 — ML Perception Pipeline & Dashboard (`tag: phase-8`, `tag: phase-9`)
 - **Status:** Complete & Verified
 - **Deliverables:**
-  - `ml/prepare_data.py`: Dataset deduplication and 70/15/15 train/val/test splitting with metadata export.
-  - `ml/train_cls.py`: YOLOv8n-cls training orchestrator.
-  - `ml/evaluate_cls.py`: Model evaluation script computing top-1/top-5 accuracy and confusion matrix, tagged with git commit hash.
-  - `perception/noisy.py`: Synthetic noisy detector emulating binomial detection loss, Poisson false alarms, and temporal k-of-n confirmation buffers.
+  - `ml/colab_train.ipynb`: End-to-end Google Colab notebook for training YOLOv8n detection models on uploaded emergency vehicle datasets.
+  - **Model Training (Google Colab T4 GPU):**
+    - Dataset: 1,066 annotated real-world images of emergency vehicles (Roboflow export with `train/`, `valid/`, `test/`, and `data.yaml`).
+    - Model: YOLOv8n (pre-trained COCO backbone fine-tuned for 30 epochs with $640\times 640$ resolution).
+    - Best Weights: Exported to `ml/runs/ev_detector/weights/best.pt` (6.5 MB, strictly ignored in git via `.gitignore`).
+    - Empirical Metrics (`ml/results/metrics.json`):
+      - EV Recall (`ev_recall`): **0.7833** (78.33%)
+      - EV Precision (`ev_precision`): **0.8253** (82.53%)
+      - False Alarm Rate (`ev_false_alarm`): **0.1747** (17.47%)
+      - mAP@50: **0.8125**
+      - mAP@50-95: **0.5291**
+  - **Perception-to-Simulation Seam (`perception/noisy.py`):**
+    - `NoisyEmulator` calibrated directly with measured metrics (`ev_recall=0.7833`, `ev_false_alarm=0.1747`).
+    - Features binomial detection dropouts, Poisson phantom vehicles, and temporal $k$-of-$n$ confirmation windows ($k=2, n=3$).
+  - `configs/exp_main.yaml`: Updated with measured empirical noise parameters.
+  - `.gitignore`: Updated to enforce strict separation:
+    - Model weights (`*.pt`, `*.pth`, `*.onnx`) and execution directories (`ml/runs/`, `/runs/`, `/results/`) ignored.
+    - Raw datasets (`data/`, `dataset/`, `datasets/`, `Emergency vehicle*/`, `*.zip`) ignored.
+    - Explicitly tracks empirical `!ml/results/metrics.json`.
+  - `ml/prepare_data.py`: Dataset deduplication and 70/15/15 train/val/test splitting utility.
+  - `ml/train_cls.py` & `ml/evaluate_cls.py`: Auxiliary classification training/eval scripts.
   - `dashboard/app.py`: Real-time Streamlit dashboard supporting live process control, 3×3 junction visual grid, EV corridor alerts, lane density chart, and an offline replay mode reading directly from `decisions.csv`.
 
 ---
@@ -170,11 +187,13 @@ laneRush/
 
 | Gate | Target | Status |
 |---|---|---|
-| **Unit Test Suite** | 67 tests covering arbiter, config, corridor, imports, kpis, phase, scoring, store, tls_info | ✅ **67 / 67 Passed** (1.12s) |
+| **Unit Test Suite** | 67 tests covering arbiter, config, corridor, imports, kpis, phase, scoring, store, tls_info | ✅ **67 / 67 Passed** (1.04s) |
 | **Control Layer Import Boundary** | AST check for zero forbidden imports (`traci`, `redis`, `store`, etc.) | ✅ **Passed** |
 | **Linter / Formatter** | `ruff check .` with PEP 8 and modern Python 3.12 rules | ✅ **0 Errors / Clean** |
 | **Config Dry Run** | `lanerush run --dry-run` schema validation | ✅ **Validated successfully** |
 | **Route Generation** | Expected ordinary vehicles per seed | ✅ **~695 (Target: ≈695 ±5%)** |
+| **ML Perception Model** | YOLOv8n fine-tuned on EV dataset | ✅ **Verified (`best.pt` & `metrics.json` integrated)** |
+| **Git Hygiene & Security** | No weights, runs, or datasets tracked in git | ✅ **Enforced (`.gitignore` verified)** |
 | **Replay & Offline Dashboard** | Functions without Redis/Postgres | ✅ **Verified** |
 
 ---

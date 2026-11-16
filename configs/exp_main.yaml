@@ -30,8 +30,8 @@ perception:
   noisy:
     recall: 0.9
     false_alarm: 0.05
-    ev_recall: 0.95
-    ev_false_alarm: 0.01
+    ev_recall: 0.7833
+    ev_false_alarm: 0.1747
     confirmation_k: 2
     confirmation_n: 3
 
