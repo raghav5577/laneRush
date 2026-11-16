@@ -1,0 +1,9 @@
+{
+  "model": "YOLOv8n-Detection",
+  "ev_recall": 0.7833,
+  "ev_precision": 0.8253,
+  "ev_false_alarm": 0.1747,
+  "mAP50": 0.8125,
+  "mAP50_95": 0.5291,
+  "weights_path": "/content/runs/detect/ml/runs/ev_detector/weights/best.pt"
+}
