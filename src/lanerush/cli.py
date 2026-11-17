@@ -27,6 +27,7 @@ def run(
     config: Path = typer.Option(Path("configs/exp_main.yaml"), help="Config YAML path."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Validate config and exit."),
     seed: int | None = typer.Option(None, help="Override seed from config."),
+    gui: bool = typer.Option(False, "--gui", help="Launch SUMO visual GUI."),
 ) -> None:
     """Run a single simulation with the given config."""
     from lanerush.config import LaneRushConfig
@@ -34,6 +35,8 @@ def run(
     cfg = LaneRushConfig.from_yaml(config)
     if seed is not None:
         cfg = cfg.model_copy(update={"sim": cfg.sim.model_copy(update={"seed": seed})})
+    if gui:
+        cfg = cfg.model_copy(update={"sim": cfg.sim.model_copy(update={"gui": True})})
 
     if dry_run:
         import json
@@ -45,7 +48,9 @@ def run(
     # Lazy import to avoid traci at import time
     from lanerush.sim.runner import run_simulation
 
-    run_simulation(cfg)
+    typer.echo(f"Starting simulation: mode='{cfg.mode}', seed={cfg.sim.seed}, gui={cfg.sim.gui}...")
+    run_dir = run_simulation(cfg)
+    typer.echo(f"Simulation completed successfully! Outputs saved to: {run_dir}")
 
 
 @app.command()

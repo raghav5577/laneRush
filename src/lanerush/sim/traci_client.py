@@ -55,6 +55,12 @@ class FakeSim:
         """Return list of (state_string, duration) for each phase."""
         return [("GGrr", 42.0), ("yyrr", 3.0), ("rrGG", 42.0), ("rryy", 3.0)]
 
+    def get_tls_controlled_links(self, tls_id: str) -> list[tuple[tuple[str, str, str], ...]]:
+        return []
+
+    def set_tls_phase_durations(self, tls_id: str, phase_durations: dict[int, float]) -> None:
+        pass
+
     def set_phase(self, tls_id: str, phase: int) -> None:
         self._tls_phases[tls_id] = phase
 
@@ -78,6 +84,12 @@ class FakeSim:
     # -- Vehicle / EV --
 
     def get_vehicle_ids(self) -> list[str]:
+        return []
+
+    def get_departed_vehicle_ids(self) -> list[str]:
+        return []
+
+    def get_vehicle_route(self, vid: str) -> list[str]:
         return []
 
     def get_vehicle_type(self, vid: str) -> str:
@@ -127,6 +139,31 @@ class SimSnapshot:
 # TraciClient — real SUMO client, the only file that imports traci
 # ---------------------------------------------------------------------------
 
+def _resolve_sumo_binary(binary: str) -> str:
+    """Resolve binary using PATH or SUMO_HOME."""
+    import os
+    import shutil
+    from pathlib import Path
+
+    if shutil.which(binary):
+        return binary
+    try:
+        import sumo  # type: ignore[import-untyped]
+
+        sumo_home = Path(str(sumo.SUMO_HOME))
+        bin_dir = sumo_home / "bin"
+        if bin_dir.exists():
+            os.environ["SUMO_HOME"] = str(sumo_home)
+            os.environ["PATH"] = f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"
+            for ext in (".exe", ""):
+                candidate = bin_dir / f"{binary}{ext}"
+                if candidate.exists():
+                    return str(candidate)
+    except Exception:
+        pass
+    return binary
+
+
 class TraciClient:
     """Thin wrapper around TraCI that returns dataclasses.
 
@@ -150,24 +187,25 @@ class TraciClient:
         gui: bool = False,
         extra_args: list[str] | None = None,
     ) -> None:
-        import subprocess
+        target_binary = "sumo-gui" if gui else sumo_binary
+        bin_path = _resolve_sumo_binary(target_binary)
 
         cmd = [
-            sumo_binary,
+            bin_path,
             "-n", net_file,
             "-r", route_file,
             "--step-length", str(step_length),
             "--seed", str(seed),
-            "--remote-port", str(self._port),
             "--time-to-teleport", "-1",
             "--no-step-log", "true",
             "--no-warnings", "true",
         ]
+        if gui:
+            cmd.extend(["--start", "true", "--delay", "350"])
         if extra_args:
             cmd.extend(extra_args)
 
-        subprocess.Popen(cmd)  # noqa: S603
-        self._traci.init(self._port)
+        self._traci.start(cmd, port=self._port)
         self._connected = True
 
     def step(self) -> None:
@@ -195,6 +233,18 @@ class TraciClient:
         logic = self._traci.trafficlight.getAllProgramLogics(tls_id)[0]
         return [(p.state, p.duration) for p in logic.phases]
 
+    def get_tls_controlled_links(self, tls_id: str) -> list[tuple[tuple[str, str, str], ...]]:
+        return list(self._traci.trafficlight.getControlledLinks(tls_id))
+
+    def set_tls_phase_durations(self, tls_id: str, phase_durations: dict[int, float]) -> None:
+        logics = self._traci.trafficlight.getAllProgramLogics(tls_id)
+        if logics:
+            logic = logics[0]
+            for p_idx, dur in phase_durations.items():
+                if p_idx < len(logic.phases):
+                    logic.phases[p_idx].duration = dur
+            self._traci.trafficlight.setProgramLogic(tls_id, logic)
+
     def set_phase(self, tls_id: str, phase: int) -> None:
         self._traci.trafficlight.setPhase(tls_id, phase)
 
@@ -219,6 +269,12 @@ class TraciClient:
 
     def get_vehicle_ids(self) -> list[str]:
         return list(self._traci.vehicle.getIDList())
+
+    def get_departed_vehicle_ids(self) -> list[str]:
+        return list(self._traci.simulation.getDepartedIDList())
+
+    def get_vehicle_route(self, vid: str) -> list[str]:
+        return list(self._traci.vehicle.getRoute(vid))
 
     def get_vehicle_type(self, vid: str) -> str:
         return str(self._traci.vehicle.getTypeID(vid))

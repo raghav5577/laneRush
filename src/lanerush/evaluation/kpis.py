@@ -37,7 +37,7 @@ def parse_tripinfo(tripinfo_xml: Path) -> list[dict]:
         trips.append(
             {
                 "id": elem.get("id", ""),
-                "vtype": elem.get("vtype", ""),
+                "vtype": elem.get("vType", elem.get("vtype", "")),
                 "depart": float(elem.get("depart", 0)),
                 "arrival": float(elem.get("arrival", -1)),
                 "duration": float(elem.get("duration", 0)),

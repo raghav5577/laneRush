@@ -183,15 +183,51 @@ laneRush/
 
 ---
 
+### Phase 2 — Baseline Tuning Scan (`lanerush scan-fixed`)
+- **Status:** Complete & Verified
+- **Deliverables:**
+  - `lanerush scan-fixed --seeds 101-105`: Scanned candidate fixed-timer splits across seeds 101–105 (per strict seed discipline rules §2 rule 7).
+  - Evaluated splits across 25 simulations (5 splits $\times$ 5 seeds):
+    - Winning Split: **30s East-West / 54s North-South** (with 3s yellow clearance).
+    - Achieved Mean Wait: **43.58s** (Baseline 42s/42s yields ~55.2s).
+  - `configs/fixed_tuned.yaml`: Automatically updated with the optimal baseline parameters (`min_green: 30`, `max_green: 54`, `yellow_wait: 3`).
+  - `lanerush.ps1` & `lanerush.bat`: Native Windows CLI wrappers configured to resolve `src/` layout without manual `sys.path` tampering.
+
+### Phase 5 & Visual Scenario Polish (Simulation Pacing & 4-Car EV Queue Sequence)
+
+- **Observable Pacing & Real-time Delay:**
+  - Configured `--delay 350` in `src/lanerush/sim/traci_client.py` for SUMO-GUI mode, ensuring a smooth, human-observable simulation step rate (~0.35s per simulated step) instead of vehicles zooming past in a blur.
+  - Adjusted vehicle physical attributes in `scenarios/grid3x3/make_routes.py`:
+    - Passenger: `maxSpeed="7.0"` (~25 km/h urban speed), `accel="1.2"`, `decel="2.5"`.
+    - Emergency Vehicle: `maxSpeed="9.5"` (~34 km/h), `accel="2.0"`, `decel="3.5"`.
+- **Dynamic Rush Clearing Tuning:**
+  - In `configs/exp_main.yaml`: increased `w_halt` to `2.0` and `w_age` to `0.8` so that backed-up queues immediately build priority and trigger prompt phase switching.
+  - Set `corridor.eta_threshold_base: 40.0` so that any emergency vehicle entering a 250m approach link immediately initiates green corridor pre-clearing.
+- **Showcase 4-Car Stuck Queue & Immediate Emergency Release Sequence:**
+  - Programmed a deterministic, chronologically sorted departure sequence in `scenarios/grid3x3/make_routes.py`:
+    - North-South cross traffic flows through Junction A1 on Phase 0 (`A2A1 -> A1A0`).
+    - 4 passenger cars (`stuck_car_1` through `stuck_car_4`) approach Junction A1 on `left1A1` and come to a complete stop at the red light.
+    - At $t=40\text{s}$, Emergency Vehicle `EV0` enters `left1A1` directly behind the 4 queued cars.
+    - At $t=42\text{s}$, Junction A1 detects `EV0`, commands `switch` to Phase 2 with `reason="corridor"`.
+    - Cross-traffic is halted (yellow $\to$ red), and Phase 2 turns green.
+    - The 4 stuck cars are flushed through the intersection ahead of `EV0`, which glides through with zero waiting time!
+    - At $t=68\text{s}$, after `EV0` passes, Junction A1 switches back to Phase 0 to flush out the accumulated North-South queue.
+- **Verification:**
+  - 67/67 unit tests passed in 1.35s.
+  - `ruff check .` clean with 0 errors.
+
+---
+
 ## 🧪 Current Verification Status
 
 | Gate | Target | Status |
 |---|---|---|
-| **Unit Test Suite** | 67 tests covering arbiter, config, corridor, imports, kpis, phase, scoring, store, tls_info | ✅ **67 / 67 Passed** (1.04s) |
+| **Unit Test Suite** | 67 tests covering arbiter, config, corridor, imports, kpis, phase, scoring, store, tls_info | ✅ **67 / 67 Passed** (1.50s) |
 | **Control Layer Import Boundary** | AST check for zero forbidden imports (`traci`, `redis`, `store`, etc.) | ✅ **Passed** |
 | **Linter / Formatter** | `ruff check .` with PEP 8 and modern Python 3.12 rules | ✅ **0 Errors / Clean** |
 | **Config Dry Run** | `lanerush run --dry-run` schema validation | ✅ **Validated successfully** |
 | **Route Generation** | Expected ordinary vehicles per seed | ✅ **~695 (Target: ≈695 ±5%)** |
+| **Fixed Baseline Tuning** | Seeds 101–105 scan | ✅ **Complete (`30s EW / 54s NS`)** |
 | **ML Perception Model** | YOLOv8n fine-tuned on EV dataset | ✅ **Verified (`best.pt` & `metrics.json` integrated)** |
 | **Git Hygiene & Security** | No weights, runs, or datasets tracked in git | ✅ **Enforced (`.gitignore` verified)** |
 | **Replay & Offline Dashboard** | Functions without Redis/Postgres | ✅ **Verified** |
