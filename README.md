@@ -8,6 +8,8 @@
 
 An intelligent, simulation-based traffic management platform built on **SUMO + TraCI (Python)**. LaneRush adaptively scores and switches traffic signals based on real-time vehicle counts, halted queues, and waiting-time aging, while dynamically pre-clearing **Emergency Vehicle (EV) Green Corridors** across multi-junction routes without creating gridlock.
 
+> 📖 **Comprehensive System Explanation:** For an in-depth breakdown of how real-world vision data maps into SUMO, TraCI's inner mechanics, module execution flow, and mathematical rulesets, see the **[Architecture & Technical Explanation Guide](docs/ARCHITECTURE_AND_EXPLANATION.md)**.
+
 ---
 
 ## 🚀 Quick Start
@@ -48,7 +50,21 @@ python scenarios/grid3x3/make_routes.py
 
 ### 3. Running the Simulation
 
-#### Interactive GUI Mode (Visual Simulation)
+#### Quick Start Entrypoint (`starter.py`)
+Run the simulation directly with the bundled starter script:
+
+```bash
+# Run visual simulation in SUMO-GUI
+python starter.py --gui
+
+# Run fast headless simulation
+python starter.py
+
+# Compare against fixed-timer baseline
+python starter.py --mode fixed
+```
+
+#### CLI Runners (`lanerush`)
 Run the adaptive corridor simulation with visual playback in SUMO-GUI:
 
 ```powershell

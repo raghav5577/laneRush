@@ -62,6 +62,8 @@ Emergency vehicle*/
 runs/
 results/
 scratch/
+starter.py
+docs/ARCHITECTURE_AND_EXPLANATION.md
 *.log
 ml/runs/
 ml/results/*
