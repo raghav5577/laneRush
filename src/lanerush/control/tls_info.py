@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from lanerush.models import TlsInfo
 
 
-def discover(tls_id: str, phases: list[tuple[str, float]]) -> TlsInfo:
+def discover(
+    tls_id: str,
+    phases: list[tuple[str, float]],
+    controlled_links: list[Any] | None = None,
+) -> TlsInfo:
     """Build a TlsInfo from raw SUMO phase list [(state_string, duration), ...].
 
     Rules (from AGENTS.md §6):
@@ -13,7 +19,7 @@ def discover(tls_id: str, phases: list[tuple[str, float]]) -> TlsInfo:
     - yellow: state has y or Y
     - v1 requires exactly 2 green phases; raises ValueError otherwise
     - each green must be cyclically followed by a yellow; raises ValueError otherwise
-    - lanes_of[phase] uses the actual state string indices, not an assumed lane_0
+    - lanes_of[phase] uses the actual incoming lane IDs when controlled_links is provided
     """
     n = len(phases)
     green_indices: list[int] = []
@@ -46,16 +52,22 @@ def discover(tls_id: str, phases: list[tuple[str, float]]) -> TlsInfo:
                 f"TLS {tls_id}: green phase {gp} has no following yellow phase in program"
             )
 
-    # lanes_of: tuple of lane indices that go green in this phase
-    # Lane IDs in SUMO are built from the TLS link index (position in state string)
-    # We use "{tls_id}_{link_index}" as placeholder; the real mapping comes from
-    # traci.trafficlight.getControlledLinks at runtime (Phase 3).
+    # lanes_of: tuple of incoming lane IDs that get green in this phase
     lanes_of: dict[int, tuple[str, ...]] = {}
     for gp in green_indices:
         state = phases[gp][0]
-        lanes_of[gp] = tuple(
-            f"{tls_id}_{i}" for i, c in enumerate(state) if c in "Gg"
-        )
+        if controlled_links:
+            phase_lanes: list[str] = []
+            for i, c in enumerate(state):
+                if c in "Gg" and i < len(controlled_links) and controlled_links[i]:
+                    lane_id = str(controlled_links[i][0][0])
+                    if lane_id not in phase_lanes:
+                        phase_lanes.append(lane_id)
+            lanes_of[gp] = tuple(phase_lanes)
+        else:
+            lanes_of[gp] = tuple(
+                f"{tls_id}_{i}" for i, c in enumerate(state) if c in "Gg"
+            )
 
     return TlsInfo(
         tls_id=tls_id,

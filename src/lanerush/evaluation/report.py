@@ -77,11 +77,23 @@ def generate_report(runs_dir: Path, out_dir: Path) -> None:
     lines.append("| Mode | Mean Wait (s) | Jain | Max Wait (s) | EV Transit (s) | n |")
     lines.append("|------|--------------|------|-------------|---------------|---|")
 
+    from lanerush.evaluation.plots import plot_ev_transit, plot_jain_vs_modes, plot_kpi_comparison
+
+    waits_dict: dict[str, list[float]] = {}
+    jains_dict: dict[str, float] = {}
+    ev_dict: dict[str, list[float]] = {}
+
     for mode, kpi_list in sorted(mode_results.items()):
         mean_waits = [k["mean_wait_s"] for k in kpi_list]
         jains = [k["jain_index"] for k in kpi_list]
         max_waits = [k["max_wait_s"] for k in kpi_list]
         ev_transits = [k["ev_transit_s"] for k in kpi_list if k["ev_transit_s"] is not None]
+
+        waits_dict[mode] = mean_waits
+        if jains:
+            jains_dict[mode] = sum(jains) / len(jains)
+        if ev_transits:
+            ev_dict[mode] = ev_transits
 
         def fmt(vals: list) -> str:
             if not vals:
@@ -93,6 +105,13 @@ def generate_report(runs_dir: Path, out_dir: Path) -> None:
         lines.append(
             f"| {mode} | {fmt(mean_waits)} | {fmt(jains)} | {fmt(max_waits)} | {fmt(ev_transits)} | {len(kpi_list)} |"
         )
+
+    # Generate comparison plots
+    plot_kpi_comparison(waits_dict, "Mean Wait (s)", out_dir / "mean_wait_comparison.png", ylabel="Mean Wait (s)")
+    if jains_dict:
+        plot_jain_vs_modes(jains_dict, out_dir / "jain_fairness.png")
+    if ev_dict:
+        plot_ev_transit(ev_dict, out_dir / "ev_transit_times.png")
 
     report_path = out_dir / "report.md"
     report_path.write_text("\n".join(lines) + "\n")

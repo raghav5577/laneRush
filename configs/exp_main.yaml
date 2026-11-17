@@ -16,13 +16,13 @@ tls:
 
 scoring:
   w_count: 1.0
-  w_halt: 1.0
-  w_age: 0.5
+  w_halt: 2.0
+  w_age: 0.8
 
 corridor:
   enabled: true
   lookahead_junctions: 3
-  eta_threshold_base: 12.0
+  eta_threshold_base: 40.0
   hold_until_passed: true
 
 perception:
