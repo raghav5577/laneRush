@@ -6,6 +6,7 @@ FakeSim is a pure-Python test double that never imports traci.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from lanerush.models import EVState, LaneObservation, is_emergency
@@ -202,6 +203,12 @@ class TraciClient:
         ]
         if gui:
             cmd.extend(["--start", "true", "--delay", "350"])
+            gui_settings = Path(net_file).parent / "viewsettings.xml"
+            if gui_settings.exists():
+                cmd.extend(["--gui-settings-file", str(gui_settings)])
+            add_file = Path(net_file).parent / "city_blocks.add.xml"
+            if add_file.exists():
+                cmd.extend(["-a", str(add_file)])
         if extra_args:
             cmd.extend(extra_args)
 

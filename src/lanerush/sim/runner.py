@@ -286,6 +286,36 @@ def _simulate(client: Any, cfg: Any, run_dir: Path) -> None:
         run_logger.close()
 
 
+def _run_sweep_worker(payload: tuple[Any, str, int, int]) -> str:
+    """Worker function for parallel sweep (must be top-level for Windows pickle)."""
+    from lanerush.config import LaneRushConfig
+
+    c, mode, seed, idx = payload
+    port = 8900 + idx
+    if mode == "fixed_tuned":
+        try:
+            ft_cfg = LaneRushConfig.from_yaml(Path("configs/fixed_tuned.yaml"))
+            tls_cfg = ft_cfg.tls
+        except Exception:
+            tls_cfg = c.tls.model_copy(update={"min_green": 30, "max_green": 54})
+        updated = c.model_copy(
+            update={
+                "mode": mode,
+                "tls": tls_cfg,
+                "sim": c.sim.model_copy(update={"seed": seed, "gui": False}),
+            }
+        )
+    else:
+        updated = c.model_copy(
+            update={
+                "mode": mode,
+                "sim": c.sim.model_copy(update={"seed": seed, "gui": False}),
+            }
+        )
+    run_dir = run_simulation(updated, port=port)
+    return str(run_dir)
+
+
 def run_sweep(cfg: Any, modes: list[str], seeds: list[int], workers: int) -> None:
     """Parallel sweep over modes × seeds."""
     import concurrent.futures
@@ -295,42 +325,17 @@ def run_sweep(cfg: Any, modes: list[str], seeds: list[int], workers: int) -> Non
 
     c: LaneRushConfig = cfg
     combos = list(itertools.product(modes, seeds))
-
-    def _run_one(args: tuple[str, int], idx: int) -> str:
-        mode, seed = args
-        port = 8900 + idx
-        if mode == "fixed_tuned":
-            try:
-                ft_cfg = LaneRushConfig.from_yaml(Path("configs/fixed_tuned.yaml"))
-                tls_cfg = ft_cfg.tls
-            except Exception:
-                tls_cfg = c.tls.model_copy(update={"min_green": 30, "max_green": 54})
-            updated = c.model_copy(
-                update={
-                    "mode": mode,
-                    "tls": tls_cfg,
-                    "sim": c.sim.model_copy(update={"seed": seed}),
-                }
-            )
-        else:
-            updated = c.model_copy(
-                update={
-                    "mode": mode,
-                    "sim": c.sim.model_copy(update={"seed": seed}),
-                }
-            )
-        run_dir = run_simulation(updated, port=port)
-        return str(run_dir)
+    tasks = [(c, mode, seed, i) for i, (mode, seed) in enumerate(combos)]
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as ex:
-        futures = {ex.submit(_run_one, combo, i): combo for i, combo in enumerate(combos)}
+        futures = {ex.submit(_run_sweep_worker, task): (task[1], task[2]) for task in tasks}
         for fut in concurrent.futures.as_completed(futures):
-            combo = futures[fut]
+            mode, seed = futures[fut]
             try:
                 result = fut.result()
-                logger.info("Done %s seed=%s → %s", combo[0], combo[1], result)
+                logger.info("Done %s seed=%s → %s", mode, seed, result)
             except Exception:
-                logger.exception("Failed %s seed=%s", combo[0], combo[1])
+                logger.exception("Failed %s seed=%s", mode, seed)
 
 
 def scan_fixed_splits(seeds: list[int]) -> None:

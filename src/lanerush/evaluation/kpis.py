@@ -30,8 +30,19 @@ def jain_index(values: list[float]) -> float:
 
 def parse_tripinfo(tripinfo_xml: Path) -> list[dict]:
     """Parse SUMO tripinfo.xml into a list of vehicle dicts."""
-    tree = ET.parse(tripinfo_xml)
-    root = tree.getroot()
+    try:
+        tree = ET.parse(tripinfo_xml)
+        root = tree.getroot()
+    except ET.ParseError:
+        # Fallback: recover incomplete XML if process was interrupted
+        try:
+            content = tripinfo_xml.read_text(encoding="utf-8", errors="ignore")
+            if "<tripinfos" in content and "</tripinfos>" not in content:
+                content += "\n</tripinfos>"
+            root = ET.fromstring(content)
+        except Exception:
+            return []
+
     trips = []
     for elem in root.findall("tripinfo"):
         trips.append(

@@ -62,6 +62,8 @@ def generate_report(runs_dir: Path, out_dir: Path) -> None:
                 cfg = yaml.safe_load(f)
             mode = cfg.get("mode", "unknown")
             trips = parse_tripinfo(tripinfo)
+            if not trips:
+                continue
             kpis = compute_kpis(trips)
             mode_results.setdefault(mode, []).append(kpis)
         except Exception:

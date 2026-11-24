@@ -105,5 +105,41 @@ def analyze(
     generate_report(runs_dir, out)
 
 
+@app.command()
+def ui(
+    host: str = typer.Option("127.0.0.1", help="Host interface to bind."),
+    port: int = typer.Option(8000, help="Port to serve the dashboard on."),
+    reload: bool = typer.Option(True, help="Enable auto-reload on code change."),
+) -> None:
+    """Launch the LaneRush React Dashboard web server."""
+    import uvicorn
+
+    typer.echo(f"Starting LaneRush React Dashboard on http://{host}:{port} ...")
+    uvicorn.run("lanerush.server.api:app", host=host, port=port, reload=reload)
+
+
+@app.command()
+def demo(
+    config: Path = typer.Option(Path("configs/exp_main.yaml"), help="Config file."),
+) -> None:
+    """Launch full Evaluator Showcase Demo in SUMO-GUI with EV corridor pre-clearing."""
+    from lanerush.config import LaneRushConfig
+    from lanerush.sim.runner import run_simulation
+
+    cfg = LaneRushConfig.from_yaml(config)
+    cfg.mode = "adaptive_corridor"
+    cfg.sim.gui = True
+
+    typer.echo("\n" + "=" * 65)
+    typer.echo("🎬 EVALUATOR DEMO: SUMO-GUI + Adaptive EV Corridor Wave")
+    typer.echo("=" * 65)
+    typer.echo("1. Launching SUMO-GUI window...")
+    typer.echo("2. In another terminal, run: .\\lanerush.ps1 ui (open http://127.0.0.1:8000)")
+    typer.echo("3. Place SUMO-GUI on the left and React Dashboard on the right!")
+    typer.echo("4. Watch EV0 enter at t=40s and cruise through with zero stopping delay.\n")
+
+    run_simulation(cfg)
+
+
 if __name__ == "__main__":
     app()

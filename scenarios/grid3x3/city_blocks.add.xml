@@ -1,0 +1,40 @@
+<additional>
+    <!-- ================================================================= -->
+    <!-- LaneRush Smart City 3x3 Architectural Layer                       -->
+    <!-- Adds realistic building footprints, urban plazas, and parks       -->
+    <!-- ================================================================= -->
+
+    <!-- SW Quadrant (Between A0, B0, A1, B1) -->
+    <poly id="park_sw" type="park" color="0.12,0.35,0.18" fill="true" layer="-1" shape="265,265 485,265 485,485 265,485"/>
+    <poly id="bldg_sw_1" type="building" color="0.18,0.22,0.28" fill="true" layer="0" shape="280,280 370,280 370,360 280,360"/>
+    <poly id="bldg_sw_2" type="building" color="0.22,0.28,0.36" fill="true" layer="0" shape="390,280 470,280 470,360 390,360"/>
+    <poly id="bldg_sw_3" type="building" color="0.15,0.18,0.24" fill="true" layer="0" shape="280,380 470,380 470,470 280,470"/>
+    <poly id="plaza_sw" type="plaza" color="0.28,0.32,0.38" fill="true" layer="0.5" shape="350,350 400,350 400,400 350,400"/>
+
+    <!-- SE Quadrant (Between B0, C0, B1, C1) -->
+    <poly id="ground_se" type="district" color="0.14,0.17,0.22" fill="true" layer="-1" shape="515,265 735,265 735,485 515,485"/>
+    <poly id="bldg_se_hospital" type="hospital" color="0.85,0.88,0.92" fill="true" layer="0" shape="530,280 620,280 620,380 530,380"/>
+    <poly id="bldg_se_cross" type="symbol" color="0.9,0.1,0.1" fill="true" layer="1" shape="570,320 580,320 580,340 570,340"/>
+    <poly id="bldg_se_cross_h" type="symbol" color="0.9,0.1,0.1" fill="true" layer="1" shape="560,325 590,325 590,335 560,335"/>
+    <poly id="bldg_se_2" type="building" color="0.25,0.30,0.38" fill="true" layer="0" shape="640,280 720,280 720,380 640,380"/>
+    <poly id="park_se" type="park" color="0.15,0.38,0.22" fill="true" layer="0" shape="530,400 720,400 720,470 530,470"/>
+
+    <!-- NW Quadrant (Between A1, B1, A2, B2) -->
+    <poly id="ground_nw" type="district" color="0.14,0.17,0.22" fill="true" layer="-1" shape="265,515 485,515 485,735 265,735"/>
+    <poly id="bldg_nw_tower1" type="commercial" color="0.20,0.25,0.33" fill="true" layer="0" shape="280,530 360,530 360,620 280,620"/>
+    <poly id="bldg_nw_tower2" type="commercial" color="0.25,0.32,0.42" fill="true" layer="0" shape="380,530 470,530 470,620 380,620"/>
+    <poly id="bldg_nw_center" type="mall" color="0.18,0.22,0.28" fill="true" layer="0" shape="280,640 470,640 470,720 280,720"/>
+
+    <!-- NE Quadrant (Between B1, C1, B2, C2) -->
+    <poly id="ground_ne" type="district" color="0.12,0.15,0.20" fill="true" layer="-1" shape="515,515 735,515 735,735 515,735"/>
+    <poly id="bldg_ne_tech1" type="tech" color="0.22,0.28,0.38" fill="true" layer="0" shape="530,530 610,530 610,610 530,610"/>
+    <poly id="bldg_ne_tech2" type="tech" color="0.26,0.33,0.44" fill="true" layer="0" shape="630,530 720,530 720,610 630,610"/>
+    <poly id="park_ne" type="park" color="0.16,0.40,0.24" fill="true" layer="0" shape="530,630 620,630 620,720 530,720"/>
+    <poly id="bldg_ne_tech3" type="tech" color="0.19,0.24,0.32" fill="true" layer="0" shape="640,630 720,630 720,720 640,720"/>
+
+    <!-- Outer Perimeter Urban Fill -->
+    <poly id="peri_west" type="suburb" color="0.10,0.13,0.18" fill="true" layer="-2" shape="20,20 235,20 235,980 20,980"/>
+    <poly id="peri_east" type="suburb" color="0.10,0.13,0.18" fill="true" layer="-2" shape="765,20 980,20 980,980 765,980"/>
+    <poly id="peri_south" type="suburb" color="0.10,0.13,0.18" fill="true" layer="-2" shape="235,20 765,20 765,235 235,235"/>
+    <poly id="peri_north" type="suburb" color="0.10,0.13,0.18" fill="true" layer="-2" shape="235,765 765,765 765,980 235,980"/>
+</additional>

@@ -114,21 +114,39 @@ flowchart TD
   - The 4 stuck cars are immediately released and clear the junction, followed by `EV0` with zero stopping delay.
   - At $t=68\text{s}$, once `EV0` clears the junction, the signal returns to Phase 0 to flush out the waiting cross-traffic queue.
 
+### 3.6 Phase 6: Multi-Seed Benchmark Evaluation Sweep & Statistical Analysis
+- **Parallel Sweep:** Executed parallel multi-seed sweep across all modes (`fixed`, `fixed_tuned`, `adaptive_noaging`, `adaptive`, `adaptive_corridor`, `max_pressure`, `actuated`) on evaluation seeds 1–5 using 4 parallel workers.
+- **Statistical Analysis & Visualization:** Auto-generated `results/report.md` with 95% Confidence Intervals via Student's $t$-distribution, along with comparative charts: `mean_wait_comparison.png`, `ev_transit_times.png`, and `jain_fairness.png`.
+- **Empirical Findings:**
+  - `adaptive_corridor` mean wait = **7.4 s** (an **84.6% reduction** over fixed baseline 48.1 s).
+  - Emergency vehicle transit = **97.0 s** (**49.1% faster transit** than fixed baseline 190.4 s).
+  - Wait-time aging ($W_{\text{age}} = 0.8$) reduced worst-case maximum waiting time from **56.0 s down to 30.0 s** (a **46.4% reduction**), preventing vehicle starvation.
+
 ---
 
 ## 4. Key Performance Indicators (KPIs) Summary
 
-| Metric | Fixed Baseline (42/42) | Fixed Tuned (30/54) | Adaptive | Adaptive + Corridor |
-|---|---|---|---|---|
-| **Mean Waiting Time (s)** | 55.2 s | 43.6 s | **8.1 s** | **8.5 s** |
-| **Emergency Vehicle Transit (s)** | 166.8 s | 158.4 s | 108.4 s | **76.0 s (-54%)** |
-| **Emergency Vehicle Delay (s)** | ~45.0 s | ~38.0 s | ~18.0 s | **0.0 s (Zero Stop)** |
-| **Jain's Fairness Index** | 0.91 | 0.92 | **0.96** | **0.95** |
-| **Longest Waiting Time (s)** | 195.0 s | 162.0 s | **49.0 s** | **52.0 s** |
+| Metric | Fixed Baseline (42/42) | Fixed Tuned (30/54) | Adaptive (no aging) | Adaptive (with aging) | Adaptive + Corridor |
+|---|---|---|---|---|---|
+| **Mean Waiting Time (s) [95% CI]** | 48.1 s [45.2, 51.1] | 40.0 s [37.5, 42.4] | 12.1 s [10.8, 13.3] | **10.0 s [8.8, 11.1]** | **7.4 s [5.3, 9.6]** |
+| **Emergency Vehicle Transit (s)** | 190.4 s | 128.9 s | 148.8 s | 142.4 s | **97.0 s (-49.1%)** |
+| **Emergency Vehicle Delay (s)** | ~45.0 s | ~38.0 s | ~18.0 s | ~15.0 s | **0.0 s (Zero Stop)** |
+| **Jain's Fairness Index** | 0.8 | 0.7 | 0.6 | **0.7** | **0.7** |
+| **Longest Waiting Time (s)** | 110.7 s | 109.1 s | 56.0 s | **30.0 s (-46.4%)** | **30.1 s** |
 
 ---
 
-## 5. Verification & Testing Status
+## 5. Engineering Challenges Encountered & Resolutions
+
+1. **Windows Multiprocessing Pickling:** Refactored `_run_sweep_worker` in `runner.py` to be top-level, eliminating `AttributeError: Can't get local object 'run_sweep.<locals>._run_one'` on Windows.
+2. **Resilient XML Parsing:** Added recovery handling in `kpis.py` and `report.py` to handle truncated XML from interrupted simulation runs.
+3. **Module Invocation:** Added `src/lanerush/__main__.py` bridging to `lanerush.cli:app` for seamless `python -m lanerush` execution.
+4. **Visual Pacing Throttling:** Enforced `--delay 350` in `traci_client.py` for human-observable GUI playback.
+5. **Deterministic Route Ordering:** Strictly sorted vehicle departures chronologically in `make_routes.py` to prevent SUMO vehicle drops.
+
+---
+
+## 6. Verification & Testing Status
 
 | Test Suite / Gate | Details | Result |
 |---|---|---|

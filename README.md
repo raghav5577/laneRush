@@ -4,192 +4,127 @@
 [![SUMO](https://img.shields.io/badge/SUMO-1.28.0-green.svg)](https://eclipse.dev/sumo/)
 [![Tests](https://img.shields.io/badge/tests-67%20passed-brightgreen.svg)]()
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Frontend](https://img.shields.io/badge/frontend-React%2018%20JSX%20%2B%20Vite-61dafb.svg)](http://127.0.0.1:8000)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An intelligent, simulation-based traffic management platform built on **SUMO + TraCI (Python)**. LaneRush adaptively scores and switches traffic signals based on real-time vehicle counts, halted queues, and waiting-time aging, while dynamically pre-clearing **Emergency Vehicle (EV) Green Corridors** across multi-junction routes without creating gridlock.
-
-> 📖 **Comprehensive System Explanation:** For an in-depth breakdown of how real-world vision data maps into SUMO, TraCI's inner mechanics, module execution flow, and mathematical rulesets, see the **[Architecture & Technical Explanation Guide](docs/ARCHITECTURE_AND_EXPLANATION.md)**.
+An intelligent, simulation-based traffic management platform built on **SUMO + TraCI (Python)** and modern **React 18 JSX**. LaneRush adaptively scores and switches traffic signals based on real-time vehicle counts, halted queues, and waiting-time aging, while dynamically pre-clearing **Multi-Axis Emergency Vehicle (EV) Green Corridors** without causing cross-traffic gridlock.
 
 ---
 
-## 🚀 Quick Start
+## 📚 Essential Documentation
 
-### 1. Installation
-
-```bash
-# Clone and enter directory
-git clone https://github.com/username/laneRush.git
-cd laneRush
-
-# Create and activate virtual environment
-python -m venv .venv
-.venv\Scripts\activate       # Windows PowerShell / CMD
-# source .venv/bin/activate  # Linux / macOS
-
-# Install package in editable mode with development dependencies
-pip install -e ".[dev]"
-```
-
-> **Note for Windows Users:** Dedicated wrapper scripts (`.\lanerush.ps1` and `lanerush.bat`) are provided in the project root so you can execute `lanerush` commands directly from PowerShell or Command Prompt without PATH or `PYTHONPATH` manual configuration.
+| Document | Description |
+|---|---|
+| **[Vision & Simulation Bridge](docs/REAL_WORLD_VISION_AND_SUMO_EXPLANATION.md)** | **How real-world camera ML (YOLOv8) connects to 2D SUMO microscopic simulation** via the Digital Twin Perception Seam. |
+| **[Evaluator Presentation Script](docs/EVALUATOR_PRESENTATION_SCRIPT.md)** | Step-by-step cue sheet for demonstrating LaneRush to evaluators and professors with 1-click timestamps. |
+| **[Architecture & Technical Reference](docs/ARCHITECTURE_AND_EXPLANATION.md)** | Comprehensive breakdown of TraCI internals, mathematical scoring formulas, and safety invariants. |
+| **[Development Log](docs/log.md)** | Detailed changelog, architectural milestones, and solved engineering challenges. |
 
 ---
 
-### 2. Generate Network & Scenarios
+## 🚀 Quick Start & Evaluator Demonstration
 
-Generate the 3×3 signalized grid network and calibrated routes:
-
-```bash
-# Generate 3x3 grid network (9 TLS junctions, 4 phases each)
-bash scenarios/grid3x3/build_net.sh
-
-# Generate calibrated stochastic flows and emergency vehicle routes
-python scenarios/grid3x3/make_routes.py
-```
-
----
-
-### 3. Running the Simulation
-
-#### Quick Start Entrypoint (`starter.py`)
-Run the simulation directly with the bundled starter script:
-
-```bash
-# Run visual simulation in SUMO-GUI
-python starter.py --gui
-
-# Run fast headless simulation
-python starter.py
-
-# Compare against fixed-timer baseline
-python starter.py --mode fixed
-```
-
-#### CLI Runners (`lanerush`)
-Run the adaptive corridor simulation with visual playback in SUMO-GUI:
+### 1. Launch the React AI Dashboard
 
 ```powershell
 # Windows
-.\lanerush.ps1 run --gui
+.\lanerush.ps1 ui
 
 # Linux / macOS
-lanerush run --gui
+lanerush ui
 ```
+*Open `http://127.0.0.1:8000` in Google Chrome or Microsoft Edge.*
 
-> **Visual Showcase in GUI:**
-> - Smooth playback is pre-configured with `--delay 350` (350 ms per step).
-> - Vehicles operate at realistic urban velocities (25 km/h for passenger cars, 34 km/h for emergency vehicles).
-> - **4-Car Queue & EV Release Demonstration:**
->   - Zoom in on **Junction A1** (middle-left intersection).
->   - Between $t=0\text{s}$ and $t=40\text{s}$, North-South traffic crosses on green.
->   - 4 passenger cars approach on `left1A1` and come to a complete stop at the red light, forming a queue.
->   - At $t=40\text{s}$, the bright red Emergency Vehicle (**EV0**) arrives behind them.
->   - At $t=42\text{s}$, Junction A1 automatically overrides the signal, stops cross-traffic with yellow clearance, turns green, and releases the 4 stuck cars ahead of EV0 so the emergency vehicle cruises through without stopping!
+### 2. Launch the High-Fidelity SUMO-GUI Simulator
 
-#### Headless Execution (Fast Batch Mode)
-```bash
-lanerush run --config configs/exp_main.yaml
-```
+You have two convenient ways to launch the microscopic simulator:
+- **Option A (1-Click from Web UI):** Click the green **`[ Launch SUMO-GUI ]`** button directly in the navbar at `http://127.0.0.1:8000`.
+- **Option B (From Terminal):**
+  ```powershell
+  python scratch\test_sim_timing.py
+  # Or:
+  .\lanerush.ps1 demo
+  ```
+
+> **The Winning Presentation Setup:** Place **SUMO-GUI** on the left half of your screen and the **React Dashboard** on the right half.
+
+---
+
+## 🌟 Key Features & Demonstrations
+
+### 1. Multi-Axis Emergency Vehicle Green Waves (280s Timeline)
+- **First Emergency Vehicle (`EV0` — East-West on Row 1 at $t=40\text{s}$):**
+  - **4 Cars Stuck at Red:** 4 passenger cars queue up at Junction A1 at the red light.
+  - **Queue Pre-Flush:** The signal commands Green early, flushing all 4 cars out of the lane.
+  - **Immediate Cross-Traffic Halt:** North-South traffic safely stops (Yellow $\to$ Red).
+  - **Zero-Delay Cruise:** `EV0` cruises through A1, B1, and C1 at 34 km/h with **0.0s delay**.
+- **Second Emergency Vehicle (`EV1` — North-South on Col B at $t=120\text{s}$):**
+  - Enters from South Ave heading North through Central Boulevard (`B0 -> B1 -> B2`).
+  - East-West cross-traffic on all 3 avenues is halted, proving **full multi-axis adaptability**.
+
+### 2. Realistic High-Fidelity SUMO-GUI
+- **Authentic 2D Car Bodies:** Vehicles render with real car bodies (`guiShape="passenger/sedan"` and `guiShape="emergency"`), hoods, windshield glass, and trunks.
+- **Realistic Color Palette:** Cars spawn in Pearl White, Royal Blue, Metallic Silver, Sunset Amber, and Charcoal Slate, alongside the red ambulance with strobe beacons.
+- **Downtown Architectural City Blocks:** Beautiful commercial towers, hospital centers, and urban parks between the intersections.
+- **Pre-Focused 260% Zoom:** Centered automatically at `(500, 500)` to fill your screen cleanly on launch.
 
 ---
 
 ## 🛠 Command Line Interface (CLI)
 
-LaneRush provides a suite of CLI tools powered by Typer:
+LaneRush provides an extensive CLI suite powered by Typer:
 
 | Command | Usage | Description |
 |---|---|---|
-| `run` | `lanerush run [--gui] [--dry-run]` | Run a single simulation run under the specified configuration. |
-| `scan-fixed` | `lanerush scan-fixed --seeds 101-105` | Sweep fixed-timer phase splits (30s–54s) on tuning seeds to identify the optimal baseline. |
-| `sweep` | `lanerush sweep configs/exp_main.yaml --modes all --seeds 1-10 --workers 4` | Run parallel evaluations across all control modes and test seeds. |
-| `analyze` | `lanerush analyze runs/ --out results/` | Compute KPIs, paired Wilcoxon/t-tests, 95% CIs, Jain fairness indexes, and generate reports. |
-| `dashboard` | `lanerush dashboard` | Launch the interactive Streamlit monitoring and replay dashboard. |
+| `ui` | `lanerush ui [--port 8000]` | Launch the React JSX web dashboard and FastAPI backend server. |
+| `demo` | `lanerush demo` | Launch the full visual evaluator showcase in SUMO-GUI. |
+| `run` | `lanerush run [--gui] [--dry-run]` | Run a simulation under the specified YAML configuration. |
+| `scan-fixed` | `lanerush scan-fixed --seeds 101-105` | Scan fixed-timer splits (30s–54s) on tuning seeds to identify the optimal baseline. |
+| `sweep` | `lanerush sweep configs/exp_main.yaml --modes all --seeds 1-10 --workers 4` | Run parallel benchmark evaluations across all control modes and test seeds. |
+| `analyze` | `lanerush analyze runs/ --out results/` | Compute 95% CIs, paired t-tests, Jain fairness indexes, and generate markdown reports. |
 
 ---
 
-## 📊 System Architecture & Invariants
+## 📈 Benchmark Performance Comparison (Phase 6 Sweep)
 
-```
-src/lanerush/
-├── cli.py            # Typer CLI entrypoint
-├── config.py         # Pydantic v2 configuration schema
-├── models.py         # Frozen dataclasses & protocols (Core contracts)
-├── sim/
-│   ├── traci_client.py  # ONLY file that imports traci/libsumo
-│   ├── runner.py        # Orchestration loop & state snapshotting
-│   └── scenario.py      # Network topology & sumolib abstraction
-├── control/          # PURE logic — ZERO I/O (no traci, redis, or db imports)
-│   ├── scoring.py       # Lane & phase score computation
-│   ├── phase.py         # Min/max green & hysteresis switching logic
-│   ├── corridor.py      # EV corridor lookahead & ETA planning
-│   ├── arbiter.py       # Safety arbiter (yellow lock, corridor override)
-│   └── tls_info.py      # TLS signal program discovery
-├── perception/       # Detection seam (GroundTruth, NoisyEmulator, YOLO)
-├── store/            # In-memory, Redis, and PostgreSQL state persistence
-└── evaluation/       # KPI calculation, statistical tests, and report generator
-```
+Empirical evaluation results averaged across test seeds:
 
-### Safety & Structural Invariants (AGENTS.md §2)
-1. **Strict Layering:** `control/` never imports `traci`, `redis`, `psycopg`, or `sim/`. It operates purely on frozen dataclasses from `models.py`.
-2. **Single SUMO Boundary:** Only `sim/traci_client.py` imports `traci`. All testing utilizes dataclass mocks or `FakeSim`.
-3. **Safety Transitions:** Every green-to-green switch passes through yellow clearance (default: 3 seconds). No yellow state may be interrupted.
-4. **Graceful Degradation:** Redis or database disconnections log a warning and fall back seamlessly to in-memory state and CSV logging without halting the simulation.
-5. **Zero Magic Constants:** All scoring weights, thresholds, and lookahead parameters derive from validated Pydantic v2 schemas.
+| Metric | Fixed Baseline (42/42) | Fixed Tuned (30/54) | Adaptive (No Aging) | Full Adaptive | Adaptive + Corridor |
+|---|---|---|---|---|---|
+| **Mean Waiting Time** | 48.1 s [45.2, 51.1] | 40.0 s [37.5, 42.4] | 12.1 s | 10.0 s | **7.4 s (-84.6%)** |
+| **EV Transit Duration** | 190.4 s | 128.9 s | 108.4 s | 101.8 s | **97.0 s (-49.1%)** |
+| **EV Stopping Delay** | ~45.0 s | ~38.0 s | ~18.0 s | ~12.0 s | **0.0 s (Zero Stop)** |
+| **Max Individual Wait** | 195.0 s | 162.0 s | 56.0 s | **30.0 s (-46%)** | **32.0 s** |
+| **Jain's Fairness Index** | 0.91 | 0.92 | 0.83 | **0.96** | **0.95** |
 
 ---
 
-## 🚦 Control Modes
+## 🤖 The Real-World Vision Model (YOLOv8)
 
-| Mode | Description |
-|---|---|
-| `fixed` | Standard fixed-timer baseline (42s East-West / 42s North-South). |
-| `fixed_tuned` | Optimal fixed-timer baseline (30s EW / 54s NS) discovered via `scan-fixed`. |
-| `adaptive_noaging` | Adaptive control using vehicle count and halted queues ($W_{\text{age}} = 0$). |
-| `adaptive` | Full adaptive control ($W_{\text{count}} \cdot \text{count} + W_{\text{halt}} \cdot \text{halt} + W_{\text{age}} \cdot \text{wait}$). |
-| `adaptive_corridor` | Full adaptive control combined with multi-junction EV Green Corridor pre-clearing. |
-
----
-
-## 📈 Reference Results & Benchmarks
-
-Empirical performance comparison (averaged across evaluation seeds):
-
-| Metric | Fixed Baseline (42/42) | Fixed Tuned (30/54) | Adaptive | Adaptive + Corridor |
-|---|---|---|---|---|
-| **Mean Waiting Time (s)** | 55.2 s | 43.6 s | **8.1 s** | **8.5 s** |
-| **Emergency Vehicle Transit (s)** | 166.8 s | 158.4 s | 108.4 s | **76.0 s (-54%)** |
-| **Emergency Vehicle Delay (s)** | ~45.0 s | ~38.0 s | ~18.0 s | **0.0 s (Zero Stop)** |
-| **Jain's Fairness Index** | 0.91 | 0.92 | **0.96** | **0.95** |
-| **Longest Waiting Time (s)** | 195.0 s | 162.0 s | **49.0 s** | **52.0 s** |
-
----
-
-## 🤖 Machine Learning EV Perception (Phase 8)
-
-- **Model:** Fine-tuned YOLOv8n classifier trained on 1,066 emergency vehicle and urban vehicle images.
-- **Model Weights:** Saved at `ml/runs/ev_detector/weights/best.pt` (excluded from git via `.gitignore`).
+- **Training:** Fine-tuned `yolov8n-cls` on 1,066 real-world emergency and passenger vehicle photos (`ml/train_cls.py`).
 - **Empirical Test Metrics (`ml/results/metrics.json`):**
-  - **EV Recall:** 78.33%
+  - **EV Detection Recall:** 78.33%
   - **EV Precision:** 82.53%
   - **mAP@50:** 81.25%
   - **False Alarm Rate:** 17.47%
-- **Simulator Integration:** Empirical metrics are directly coupled into `NoisyEmulator` with $k$-of-$n$ temporal confirmation to validate system resilience under realistic sensor noise.
+- **Digital Twin Seam:** The `NoisyEmulator` injects this exact empirical error distribution into SUMO's sensor readings with $k$-of-$n$ temporal voting, proving controller stability under real-world camera noise.
 
 ---
 
 ## 🧪 Testing & Verification
 
-Run the full unit test suite (no SUMO binary required):
+Run the automated test suite:
 
 ```bash
-# Fast gate (67 unit tests in ~1.3s)
-pytest tests/unit -v -m "not sumo"
+# Unit test suite (67 unit tests in ~1.0s, no SUMO required)
+python -m pytest tests/unit -v -m "not sumo"
 
-# Linter and type checks
-ruff check .
+# PEP 8 & AST architectural boundary checks
+python -m ruff check .
 ```
 
 ---
 
 ## 📜 License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License.

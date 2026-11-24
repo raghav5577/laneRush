@@ -28,11 +28,14 @@ def main() -> None:
              "http://sumo.dlr.de/xsd/routes_file.xsd")
 
     # --- Vehicle types ---
-    # Slowed down for clear, observable, realistic urban movement
+    # Realistic 2D vehicle shapes and proportions for clear microscopic viewing
     vtype_pass = ET.SubElement(root, "vType")
     vtype_pass.set("id", "passenger")
     vtype_pass.set("vClass", "passenger")
-    vtype_pass.set("color", "1,1,0")
+    vtype_pass.set("guiShape", "passenger/sedan")
+    vtype_pass.set("length", "4.8")
+    vtype_pass.set("width", "1.95")
+    vtype_pass.set("color", "0.92,0.92,0.95")  # Pearl white default
     vtype_pass.set("maxSpeed", "7.0")  # ~25 km/h urban speed, easily observable
     vtype_pass.set("accel", "1.2")
     vtype_pass.set("decel", "2.5")
@@ -40,10 +43,13 @@ def main() -> None:
     vtype_ev = ET.SubElement(root, "vType")
     vtype_ev.set("id", "emergency")
     vtype_ev.set("vClass", "emergency")
-    vtype_ev.set("color", "1,0,0")
+    vtype_ev.set("guiShape", "emergency")
+    vtype_ev.set("length", "6.8")
+    vtype_ev.set("width", "2.3")
+    vtype_ev.set("color", "1,0,0")  # Vibrant emergency red
     vtype_ev.set("maxSpeed", "9.5")  # ~34 km/h, visibly faster than cars
     vtype_ev.set("speedDev", "0")
-    vtype_ev.set("accel", "2.0")
+    vtype_ev.set("accel", "2.2")
     vtype_ev.set("decel", "3.5")
 
     # --- Common Routes ---
@@ -62,27 +68,28 @@ def main() -> None:
     # --- Showcase Sequence: 4 stuck cars + immediate EV release ---
     # North-South vehicles start on A2A1 to keep Phase 0 active and East-West at RED
     showcase_vehicles = [
-        ("cross_ns_1", "passenger", "route_ns_approach", 1),
-        ("stuck_car_1", "passenger", "route_ew_row1", 2),
-        ("stuck_car_2", "passenger", "route_ew_row1", 6),
-        ("cross_ns_2", "passenger", "route_ns_approach", 7),
-        ("stuck_car_3", "passenger", "route_ew_row1", 10),
-        ("cross_ns_3", "passenger", "route_ns_approach", 13),
-        ("stuck_car_4", "passenger", "route_ew_row1", 14),
-        ("cross_ns_4", "passenger", "route_ns_approach", 19),
-        ("cross_ns_5", "passenger", "route_ns_approach", 25),
-        ("cross_ns_6", "passenger", "route_ns_approach", 31),
-        ("cross_ns_7", "passenger", "route_ns_approach", 37),
-        ("EV0", "emergency", "route_ew_row1", 40),
+        ("cross_ns_1", "passenger", "route_ns_approach", 1, "0.2,0.4,0.8"),    # Royal Blue
+        ("stuck_car_1", "passenger", "route_ew_row1", 2, "0.95,0.95,0.98"),    # Pearl White
+        ("stuck_car_2", "passenger", "route_ew_row1", 6, "0.2,0.6,0.9"),       # Sky Blue Metallic
+        ("cross_ns_2", "passenger", "route_ns_approach", 7, "0.75,0.75,0.8"),   # Silver
+        ("stuck_car_3", "passenger", "route_ew_row1", 10, "0.9,0.55,0.1"),     # Sunset Amber
+        ("cross_ns_3", "passenger", "route_ns_approach", 13, "0.2,0.25,0.3"),   # Dark Slate
+        ("stuck_car_4", "passenger", "route_ew_row1", 14, "0.45,0.45,0.5"),    # Charcoal
+        ("cross_ns_4", "passenger", "route_ns_approach", 19, "0.8,0.2,0.2"),    # Crimson
+        ("cross_ns_5", "passenger", "route_ns_approach", 25, "0.95,0.95,0.98"), # Pearl White
+        ("cross_ns_6", "passenger", "route_ns_approach", 31, "0.15,0.35,0.7"),  # Navy
+        ("cross_ns_7", "passenger", "route_ns_approach", 37, "0.7,0.7,0.75"),   # Silver
+        ("EV0", "emergency", "route_ew_row1", 40, "1,0,0"),                     # Fire-Engine Red
     ]
     showcase_vehicles.sort(key=lambda item: item[3])
 
-    for vid, vtype, route_id, dep in showcase_vehicles:
+    for vid, vtype, route_id, dep, col in showcase_vehicles:
         veh = ET.SubElement(root, "vehicle")
         veh.set("id", vid)
         veh.set("type", vtype)
         veh.set("route", route_id)
         veh.set("depart", str(dep))
+        veh.set("color", col)
 
     # --- Background stochastic flows (EW, NS, side) ---
     ew_flows = [
@@ -121,17 +128,18 @@ def main() -> None:
         flow.set("begin", "60")  # Start background flows after the initial showcase sequence
         flow.set("end", "3600")
         flow.set("probability", str(prob))
+        flow.set("color", "random")
 
     # --- Additional Emergency Vehicles at later intervals ---
     ev_routes = [
-        # EV1: West→East through row 1 at t=180
-        ("EV1", 180, ["left1A1", "A1B1", "B1C1", "C1right1"]),
-        # EV2: South→North through col B at t=300
-        ("EV2", 300, ["bottom1B0", "B0B1", "B1B2", "B2top1"]),
-        # EV3: East→West through row 0 at t=420
-        ("EV3", 420, ["right0C0", "C0B0", "B0A0", "A0left0"]),
-        # EV4: North→South through col A at t=540
-        ("EV4", 540, ["top0A2", "A2A1", "A1A0", "A0bottom0"]),
+        # EV1: South→North through col B (Central Boulevard) at t=120
+        ("EV1", 120, ["bottom1B0", "B0B1", "B1B2", "B2top1"]),
+        # EV2: West→East through row 1 at t=240
+        ("EV2", 240, ["left1A1", "A1B1", "B1C1", "C1right1"]),
+        # EV3: East→West through row 0 at t=360
+        ("EV3", 360, ["right0C0", "C0B0", "B0A0", "A0left0"]),
+        # EV4: North→South through col A at t=480
+        ("EV4", 480, ["top0A2", "A2A1", "A1A0", "A0bottom0"]),
     ]
 
     for ev_id, depart, edges in ev_routes:
