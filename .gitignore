@@ -88,3 +88,9 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 
+# 11. Helper & Explanation Markdown Documents (Keep local, exclude from GitHub)
+docs/*.md
+!docs/log.md
+
+
+agents.md
