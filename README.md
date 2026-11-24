@@ -11,18 +11,7 @@ An intelligent, simulation-based traffic management platform built on **SUMO + T
 
 ---
 
-## 📚 Essential Documentation
-
-| Document | Description |
-|---|---|
-| **[Vision & Simulation Bridge](docs/REAL_WORLD_VISION_AND_SUMO_EXPLANATION.md)** | **How real-world camera ML (YOLOv8) connects to 2D SUMO microscopic simulation** via the Digital Twin Perception Seam. |
-| **[Evaluator Presentation Script](docs/EVALUATOR_PRESENTATION_SCRIPT.md)** | Step-by-step cue sheet for demonstrating LaneRush to evaluators and professors with 1-click timestamps. |
-| **[Architecture & Technical Reference](docs/ARCHITECTURE_AND_EXPLANATION.md)** | Comprehensive breakdown of TraCI internals, mathematical scoring formulas, and safety invariants. |
-| **[Development Log](docs/log.md)** | Detailed changelog, architectural milestones, and solved engineering challenges. |
-
----
-
-## 🚀 Quick Start & Evaluator Demonstration
+## 🚀 Quick Start & Demonstration
 
 ### 1. Launch the React AI Dashboard
 
